@@ -3,5 +3,20 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"settings": {
+		"files.associations": {
+			"__config": "cpp",
+			"__nullptr": "cpp",
+			"cstddef": "cpp",
+			"exception": "cpp",
+			"initializer_list": "cpp",
+			"stdexcept": "cpp",
+			"type_traits": "cpp",
+			"typeinfo": "cpp",
+			"algorithm": "cpp",
+			"thread": "cpp",
+			"vector": "cpp"
+		}
+	}
 }

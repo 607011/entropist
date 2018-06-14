@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <string>
+#include <thread>
 #include <Carbon/Carbon.h>
 #include <ApplicationServices/ApplicationServices.h>
 #include <cryptopp/sha.h>
@@ -58,8 +59,8 @@ CFStringRef stringFromKey(CGKeyCode keyCode, CGEventFlags modifiers)
 }
 #endif
 
-CryptoPP::SHA512 hash;
-CryptoPP::byte digest[CryptoPP::SHA512::DIGESTSIZE];
+CryptoPP::SHA512 keyHash;
+CryptoPP::byte keyDigest[CryptoPP::SHA512::DIGESTSIZE];
 
 CGEventRef keyEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
 {
@@ -86,30 +87,39 @@ CGEventRef keyEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef 
     std::cout << stringFromCFString(keyStrRef) << std::endl;
     // CGEventSetIntegerValueField(event, kCGKeyboardEventKeycode, (int64_t)keycode);
 #endif
-    hash.Update(reinterpret_cast<CryptoPP::byte *>(&timestamp), sizeof(timestamp) / sizeof(CryptoPP::byte));
-    hash.Update(reinterpret_cast<CryptoPP::byte *>(&keycode), sizeof(keycode) / sizeof(CryptoPP::byte));
-    hash.Update(reinterpret_cast<CryptoPP::byte *>(&flags), sizeof(flags) / sizeof(CryptoPP::byte));
-    hash.Final(digest);
+    keyHash.Update(reinterpret_cast<CryptoPP::byte *>(&timestamp), sizeof(timestamp) / sizeof(CryptoPP::byte));
+    keyHash.Update(reinterpret_cast<CryptoPP::byte *>(&keycode), sizeof(keycode) / sizeof(CryptoPP::byte));
+    keyHash.Update(reinterpret_cast<CryptoPP::byte *>(&flags), sizeof(flags) / sizeof(CryptoPP::byte));
+    keyHash.Final(keyDigest);
     std::string hexDigest;
     CryptoPP::HexEncoder encoder(new CryptoPP::StringSink(hexDigest), false);
-    encoder.Put(digest, sizeof(digest));
+    encoder.Put(keyDigest, sizeof(keyDigest));
     encoder.MessageEnd();
     std::cout << "\r" << hexDigest << std::flush;
   }
   return event;
 }
 
-int main(void)
+
+void keyEntropist(void)
 {
   CGEventMask eventMask = ((1 << kCGEventKeyDown) | (1 << kCGEventKeyUp));
   CFMachPortRef eventTap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, eventMask, keyEventCallback, NULL);
   if (!eventTap) {
       std::cerr << "failed to create event tap" << std::endl;
-      return 1;
+      return;
   }
   CFRunLoopSourceRef runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0);
   CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
   CGEventTapEnable(eventTap, true);
   CFRunLoopRun();
+}
+
+
+int main(void)
+{
+  std::cout << "Launching keyboard entropist ..." << std::endl;
+  std::thread keyThread(keyEntropist);
+  keyThread.join();
   return 0;
 }
