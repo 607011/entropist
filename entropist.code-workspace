@@ -16,7 +16,8 @@
 			"typeinfo": "cpp",
 			"algorithm": "cpp",
 			"thread": "cpp",
-			"vector": "cpp"
+			"vector": "cpp",
+			"ios": "cpp"
 		}
 	}
 }

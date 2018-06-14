@@ -12,99 +12,86 @@
 #include <cryptopp/sha.h>
 #include <cryptopp/hex.h>
 
-#ifdef DEBUG
-#include <iomanip>
-std::string stringFromCFString(CFStringRef cfStr)
+
+class TypingEntropist {
+public:
+  ~TypingEntropist() {}
+
+  static TypingEntropist &instance(void)
+  {
+    static TypingEntropist instance;
+    return instance;
+  }
+
+  void run(void);
+  void join(void);
+
+protected:
+  static const int THRESHOLD = 128 * CryptoPP::SHA512::DIGESTSIZE;
+  int total;
+  std::thread thread;
+  CryptoPP::SHA512 hash;
+  CryptoPP::byte digest[CryptoPP::SHA512::DIGESTSIZE];
+
+  static CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon);
+  static void runner(void);
+
+private:
+  TypingEntropist(void);
+  TypingEntropist(TypingEntropist const &) = delete;
+  void operator=(TypingEntropist const &) = delete;
+};
+
+
+TypingEntropist::TypingEntropist(void)
+  : total(THRESHOLD)
 {
-  static const CFIndex MaxLength = 3 + 1; // CFStringGetMaximumSizeForEncoding(1, kCFStringEncodingUTF8) + 1
-  char buffer[MaxLength] = {0};
-  CFStringGetCString(cfStr, buffer, MaxLength, kCFStringEncodingUTF8);
-  return std::string(buffer);
+  // ...
 }
 
-CFStringRef stringFromKey(CGKeyCode keyCode, CGEventFlags modifiers)
+
+void TypingEntropist::run(void)
 {
-  TISInputSourceRef currentKeyboard = TISCopyCurrentKeyboardInputSource();
-  CFDataRef layoutData = reinterpret_cast<CFDataRef>(TISGetInputSourceProperty(currentKeyboard, kTISPropertyUnicodeKeyLayoutData));
-  const UCKeyboardLayout *keyboardLayout = reinterpret_cast<const UCKeyboardLayout *>(CFDataGetBytePtr(layoutData));
-  UInt32 deadKeyState = 0;
-  static const UniCharCount MaxLength = 4;
-  UniChar chars[MaxLength] = {0};
-  UniCharCount realLength = 0;
-  UInt32 modifierKeyState = 0;
-  if (modifiers & kCGEventFlagMaskShift) {
-    modifierKeyState |= shiftKey;
-  }
-  if (modifiers & kCGEventFlagMaskControl) {
-    modifierKeyState |= controlKey;
-  }
-  if (modifiers & kCGEventFlagMaskAlternate) {
-    modifierKeyState |= optionKey;
-  }
-  if (modifiers & kCGEventFlagMaskCommand) {
-    modifierKeyState |= cmdKey;
-  }
-  UCKeyTranslate(keyboardLayout,
-                 keyCode,
-                 kUCKeyActionDown,
-                 (modifierKeyState >> 8) & 0xff,
-                 LMGetKbdType(),
-                 kUCKeyTranslateNoDeadKeysBit,
-                 &deadKeyState,
-                 MaxLength / sizeof(UniChar),
-                 &realLength,
-                 chars);
-  CFRelease(currentKeyboard);
-  return CFStringCreateWithCharacters(kCFAllocatorDefault, chars, realLength);
+  thread = std::thread(TypingEntropist::runner);
 }
-#endif
 
-CryptoPP::SHA512 keyHash;
-CryptoPP::byte keyDigest[CryptoPP::SHA512::DIGESTSIZE];
 
-CGEventRef keyEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
+void TypingEntropist::join(void)
+{
+  thread.join();
+}
+
+
+CGEventRef TypingEntropist::eventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
 {
   if (type == kCGEventKeyUp)
   {
-	  CGKeyCode keycode = static_cast<CGKeyCode>(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode));
+    CGKeyCode keycode = static_cast<CGKeyCode>(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode));
     CGEventFlags flags = static_cast<CGEventFlags>(CGEventGetFlags(event));
     CGEventTimestamp timestamp = CGEventGetTimestamp(event);
-#ifdef DEBUG
-    CFStringRef keyStrRef = stringFromKey(keycode, flags);
-    std::cout << timestamp << " " << std::hex << std::setw(8) << std::setfill('0') << flags << ": ";
-    if (flags & kCGEventFlagMaskShift) {
-      std::cout << "Shift+";
+    instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&timestamp), sizeof(timestamp) / sizeof(CryptoPP::byte));
+    instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&keycode), sizeof(keycode) / sizeof(CryptoPP::byte));
+    instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&flags), sizeof(flags) / sizeof(CryptoPP::byte));
+    instance().total -= sizeof(timestamp) + sizeof(keycode) + sizeof(flags);
+    if (instance().total < 0)
+    {
+      instance().total = THRESHOLD;
+      instance().hash.Final(instance().digest);
+      std::string hexDigest;
+      CryptoPP::HexEncoder encoder(new CryptoPP::StringSink(hexDigest), false);
+      encoder.Put(instance().digest, sizeof(digest));
+      encoder.MessageEnd();
+      std::cout << "\r" << hexDigest << std::flush;
     }
-    if (flags & kCGEventFlagMaskAlternate) {
-      std::cout << "Alt+";
-    }
-    if (flags & kCGEventFlagMaskControl) {
-      std::cout << "Ctrl+";
-    }
-    if (flags & kCGEventFlagMaskCommand) {
-      std::cout << "Cmd+";
-    }
-    std::cout << stringFromCFString(keyStrRef) << std::endl;
-    // CGEventSetIntegerValueField(event, kCGKeyboardEventKeycode, (int64_t)keycode);
-#endif
-    keyHash.Update(reinterpret_cast<CryptoPP::byte *>(&timestamp), sizeof(timestamp) / sizeof(CryptoPP::byte));
-    keyHash.Update(reinterpret_cast<CryptoPP::byte *>(&keycode), sizeof(keycode) / sizeof(CryptoPP::byte));
-    keyHash.Update(reinterpret_cast<CryptoPP::byte *>(&flags), sizeof(flags) / sizeof(CryptoPP::byte));
-    keyHash.Final(keyDigest);
-    std::string hexDigest;
-    CryptoPP::HexEncoder encoder(new CryptoPP::StringSink(hexDigest), false);
-    encoder.Put(keyDigest, sizeof(keyDigest));
-    encoder.MessageEnd();
-    std::cout << "\r" << hexDigest << std::flush;
   }
   return event;
 }
 
 
-void keyEntropist(void)
+void TypingEntropist::runner(void)
 {
-  CGEventMask eventMask = ((1 << kCGEventKeyDown) | (1 << kCGEventKeyUp));
-  CFMachPortRef eventTap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, eventMask, keyEventCallback, NULL);
+  CGEventMask eventMask = 1 << kCGEventKeyUp;
+  CFMachPortRef eventTap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, eventMask, eventCallback, NULL);
   if (!eventTap) {
       std::cerr << "failed to create event tap" << std::endl;
       return;
@@ -118,8 +105,9 @@ void keyEntropist(void)
 
 int main(void)
 {
-  std::cout << "Launching keyboard entropist ..." << std::endl;
-  std::thread keyThread(keyEntropist);
-  keyThread.join();
+  std::cout << "Launching typing entropist ..." << std::endl;
+  TypingEntropist &e = TypingEntropist::instance();
+  e.run();
+  e.join();
   return 0;
 }
