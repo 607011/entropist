@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "sudo",
+            "args": [
+                "./eg"
+            ]
+        },
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "eg.cpp",
+                "-o", "eg",
+                "-Wall",
+                "-ggdb",
+                "-framework", "CoreFoundation",
+                "-framework", "ApplicationServices",
+                "-framework", "Carbon",
+                "-lcryptopp"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

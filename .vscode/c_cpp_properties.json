@@ -1,0 +1,33 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "browse": {
+                "path": [
+                    "${workspaceFolder}"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "${workspaceFolder}",
+                "/usr/local/include",
+                "/usr/include",
+                "/Library/Developer/CommandLineTools/usr/lib/clang/10.0.0/include",
+                "/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks",
+                "/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks",
+                "/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks",
+                "/usr/local/Cellar/cryptopp/7.0.0/include/cryptopp"
+            ],
+            "defines": [],
+            "macFrameworkPath": [
+                "/System/Library/Frameworks",
+                "/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
