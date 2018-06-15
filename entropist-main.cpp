@@ -9,11 +9,8 @@
 #include <thread>
 #include <unistd.h>
 #include <stdlib.h>
-#include <ApplicationServices/ApplicationServices.h>
-#include <Carbon/Carbon.h>
 #include <cryptopp/sha.h>
 #include <cryptopp/hex.h>
-
 #include "entropist.h"
 #include "optionparser.h"
 

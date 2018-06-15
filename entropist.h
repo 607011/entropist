@@ -11,7 +11,10 @@
 #include <string>
 #include <cryptopp/sha.h>
 #include <cryptopp/hex.h>
+
+#ifdef MACOS
 #include <Carbon/Carbon.h>
+#endif
 
 class Entropist {
 public:
@@ -97,8 +100,13 @@ protected:
   CryptoPP::SHA512 hash;
   CryptoPP::byte digest[CryptoPP::SHA512::DIGESTSIZE];
 
+#ifdef MACOS
   static CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon);
   static void runner(void);
+#endif
+
+#ifdef X11
+#endif
 
 private:
   Entropist(void)
@@ -112,3 +120,4 @@ private:
 };
 
 #endif // __ENTROPIST_H__
+
