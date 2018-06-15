@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
   if (argc > 0)
   {
     --argc;
-    ++argv;    
+    ++argv;
   }
   Entropist &e = Entropist::instance();
   option::Stats stats(usage, argc, argv);

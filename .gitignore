@@ -1,5 +1,4 @@
 entropist
-*.dSYM
-*.o
 *.bin
 *.hex
+.DS_Store
