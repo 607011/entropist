@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "sudo",
             "args": [
-                "./eg"
+                "./entropist"
             ]
         },
         {
@@ -14,8 +14,11 @@
             "type": "shell",
             "command": "g++",
             "args": [
-                "eg.cpp",
-                "-o", "eg",
+                "entropist-main.cpp",
+                "entropist_macos.cpp",
+                "-o", "entropist",
+                "-O2",
+                "-std=c++11",
                 "-Wall",
                 "-ggdb",
                 "-framework", "CoreFoundation",

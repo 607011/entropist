@@ -1,4 +1,5 @@
 entropist
 *.dSYM
 *.o
-
+*.bin
+*.hex
