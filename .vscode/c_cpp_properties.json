@@ -18,7 +18,7 @@
                 "/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks",
                 "/usr/local/Cellar/cryptopp/7.0.0/include/cryptopp"
             ],
-            "defines": [],
+            "defines": ["MACOS"],
             "macFrameworkPath": [
                 "/System/Library/Frameworks",
                 "/Library/Frameworks"

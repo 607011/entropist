@@ -16,6 +16,10 @@
 #include <Carbon/Carbon.h>
 #endif
 
+#ifdef X11
+#include <X11/Xlib.h>
+#endif
+
 class Entropist {
 public:
   ~Entropist() {}
@@ -100,12 +104,10 @@ protected:
   CryptoPP::SHA512 hash;
   CryptoPP::byte digest[CryptoPP::SHA512::DIGESTSIZE];
 
+  static void runner(void);
+
 #ifdef MACOS
   static CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon);
-  static void runner(void);
-#endif
-
-#ifdef X11
 #endif
 
 private:
