@@ -923,7 +923,7 @@ private:
 struct Arg
 {
   //! @brief For options that don't take an argument: Returns ARG_NONE.
-  static ArgStatus None(const Option&, bool)
+  static ArgStatus NoArg(const Option&, bool)
   {
     return ARG_NONE;
   }

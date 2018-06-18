@@ -9,7 +9,7 @@
 #include <thread>
 #include <unistd.h>
 #include <stdlib.h>
-#include <cryptopp/sha.h>
+#include <cryptopp/sha3.h>
 #include <cryptopp/hex.h>
 #include "entropist.h"
 #include "optionparser.h"
@@ -34,12 +34,12 @@ struct Arg: public option::Arg
 
 const option::Descriptor usage[] =
 {
-  {UNKNOWN, 0, "", "", option::Arg::None, "USAGE: entropist [options]\n\nOptions:" },
-  {HELP, 0, "?" , "help", option::Arg::None, "  --help  \tPrint usage and exit." },
-  {HEX, 0, "" , "hex", option::Arg::None, "  --hex  \tOutput hexadecimal data instead of binary." },
+  {UNKNOWN, 0, "", "", option::Arg::NoArg, "USAGE: entropist [options]\n\nOptions:" },
+  {HELP, 0, "?" , "help", option::Arg::NoArg, "  --help  \tPrint usage and exit." },
+  {HEX, 0, "" , "hex", option::Arg::NoArg, "  --hex  \tOutput hexadecimal data instead of binary." },
   {OUTPUT, 0, "o", "output", Arg::Required, "  --output=<arg>, -o <arg>  \tSet output filename." },
-  {VERBOSE, 0, "v" , "", option::Arg::None, "  -v  \tVerbose output." },
-  {UNKNOWN, 0, "", "" , option::Arg::None,
+  {VERBOSE, 0, "v" , "", option::Arg::NoArg, "  -v  \tVerbose output." },
+  {UNKNOWN, 0, "", "" , option::Arg::NoArg,
     "\nExamples:\n"
     "  entropist\n"
     "  entropist -v\n"

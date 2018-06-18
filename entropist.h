@@ -9,7 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cryptopp/sha.h>
+#include <cryptopp/sha3.h>
 #include <cryptopp/hex.h>
 
 #ifdef MACOS
@@ -96,13 +96,13 @@ public:
 
 
 protected:
-  static const int THRESHOLD = 128 * CryptoPP::SHA512::DIGESTSIZE;
+  static const int THRESHOLD = 128 * CryptoPP::SHA3_512::DIGESTSIZE;
   int total;
   bool hexOutput;
   std::ofstream out;
   std::thread thread;
-  CryptoPP::SHA512 hash;
-  CryptoPP::byte digest[CryptoPP::SHA512::DIGESTSIZE];
+  CryptoPP::SHA3_512 hash;
+  uint8_t digest[CryptoPP::SHA3_512::DIGESTSIZE];
 
   static void runner(void);
 
