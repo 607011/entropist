@@ -105,7 +105,7 @@ public:
 
 
 protected:
-  static const int MIN_BITS = CryptoPP::SHA3_512::DIGESTSIZE;
+  static const int MIN_BITS = 8 * CryptoPP::SHA3_512::DIGESTSIZE;
   int totalBits;
   bool hexOutput;
   std::ofstream out;

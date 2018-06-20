@@ -15,9 +15,9 @@ CGEventRef Entropist::eventCallback(CGEventTapProxy proxy, CGEventType type, CGE
       CGKeyCode keycode = static_cast<CGKeyCode>(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode));
       CGEventFlags flags = static_cast<CGEventFlags>(CGEventGetFlags(event));
       CGEventTimestamp timestamp = CGEventGetTimestamp(event);
-      instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&timestamp), sizeof(timestamp) / sizeof(CryptoPP::byte));
-      instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&keycode), sizeof(keycode) / sizeof(CryptoPP::byte));
-      instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&flags), sizeof(flags) / sizeof(CryptoPP::byte));
+      instance().hash.Update(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
+      instance().hash.Update(reinterpret_cast<uint8_t*>(&keycode), sizeof(keycode));
+      instance().hash.Update(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
       instance().totalBits += 2;
       break;
     }
@@ -25,8 +25,8 @@ CGEventRef Entropist::eventCallback(CGEventTapProxy proxy, CGEventType type, CGE
     {
       CGPoint location = CGEventGetLocation(event);
       CGEventTimestamp timestamp = CGEventGetTimestamp(event);
-      instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&location), sizeof(location) / sizeof(CryptoPP::byte));
-      instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&timestamp), sizeof(timestamp) / sizeof(CryptoPP::byte));
+      instance().hash.Update(reinterpret_cast<uint8_t*>(&location), sizeof(location));
+      instance().hash.Update(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
       instance().totalBits += 4;
       break;
     }
