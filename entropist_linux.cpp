@@ -9,20 +9,15 @@
 #include <unistd.h>
 #include <iostream>
 
+#include <linux/input.h>
 #include <linux/input-event-codes.h>
-
-struct input_event {
-  struct timeval time;
-  unsigned short type;
-  unsigned short code;
-  unsigned int value;
-};
 
 void Entropist::runner(void)
 {
   int fd = open(instance().mouseInput.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
   if (fd < 0) {
     std::cerr << "ERROR: Cannot open " << instance().mouseInput << "." << std::endl;
+    return;
   }
   fcntl(fd, F_SETFL, 0);
   while (true)
