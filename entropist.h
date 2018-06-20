@@ -125,6 +125,11 @@ public:
   }
 
 
+#ifdef LINUX
+  void findDevices(void);
+#endif
+
+
 protected:
   static constexpr double MinBitsForUpdate = 8 * CryptoPP::SHA3_512::DIGESTSIZE;
   static constexpr double EntropySafetyFactor = 1.0 / 100;

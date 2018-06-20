@@ -118,6 +118,11 @@ int main(int argc, char *argv[])
   }
 #endif
 
+
+#ifdef LINUX
+  e.findDevices();
+#endif
+
   e.run();
   e.join();
   return EXIT_SUCCESS;
