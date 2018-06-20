@@ -52,6 +52,14 @@ bool verbose = false;
 
 int main(int argc, char *argv[])
 {
+#ifdef LINUX
+  if (getuid() != 0)
+  {
+    std::cerr << "This program must be run as root." << std::endl;
+    return EXIT_FAILURE;
+  }
+#endif  
+
   if (argc > 0)
   {
     --argc;
@@ -94,18 +102,18 @@ int main(int argc, char *argv[])
   {
     int columns = getenv("COLUMNS")? atoi(getenv("COLUMNS")) : 80;
     option::printUsage(fwrite, stdout, usage, columns);
-    return parse.error() ? 1 : 0;
+    return parse.error() ? EXIT_FAILURE : EXIT_SUCCESS;
   }
   
+#ifdef MACOS
   if (getuid() != 0)
   {
     std::cerr << "*** You should run this program as root to make the most of it,\n"
       "*** i.e. leverage key press events to collect more entropy." << std::endl;
   }
+#endif
+
   e.run();
-  if (verbose) {
-    std::cout << "Collection entropy from mouse movements" << (getuid() == 0 ? " and key presses" : "") << " ..." << std::endl;
-  }
   e.join();
-  return 0;
+  return EXIT_SUCCESS;
 }

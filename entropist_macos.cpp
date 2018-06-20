@@ -18,7 +18,7 @@ CGEventRef Entropist::eventCallback(CGEventTapProxy proxy, CGEventType type, CGE
       instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&timestamp), sizeof(timestamp) / sizeof(CryptoPP::byte));
       instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&keycode), sizeof(keycode) / sizeof(CryptoPP::byte));
       instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&flags), sizeof(flags) / sizeof(CryptoPP::byte));
-      instance().total += sizeof(timestamp) + sizeof(keycode) + sizeof(flags);
+      instance().totalBits += 2;
       break;
     }
     case kCGEventMouseMoved:
@@ -27,7 +27,7 @@ CGEventRef Entropist::eventCallback(CGEventTapProxy proxy, CGEventType type, CGE
       CGEventTimestamp timestamp = CGEventGetTimestamp(event);
       instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&location), sizeof(location) / sizeof(CryptoPP::byte));
       instance().hash.Update(reinterpret_cast<CryptoPP::byte *>(&timestamp), sizeof(timestamp) / sizeof(CryptoPP::byte));
-      instance().total += sizeof(location) + sizeof(timestamp);
+      instance().totalBits += 4;
       break;
     }
     default:

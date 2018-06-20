@@ -16,9 +16,6 @@
 #include <Carbon/Carbon.h>
 #endif
 
-#ifdef X11
-#include <X11/Xlib.h>
-#endif
 
 class Entropist {
 public:
@@ -35,6 +32,18 @@ public:
   {
     thread = std::thread(Entropist::runner);
   }
+
+#ifdef LINUX
+  void setMouseInput(const std::string &in)
+  {
+    mouseInput = in;
+  }
+
+  void setKeyboardInput(const std::string &in)
+  {
+    keyboardInput = in;
+  }
+#endif 
 
 
   void join(void)
@@ -61,9 +70,9 @@ public:
 
 
   void output(void) {
-    if (total > THRESHOLD)
+    if (totalBits > MIN_BITS)
     {
-      total = 0;
+      totalBits = 0;
       hash.Final(digest);
       if (hexOutput)
       {
@@ -96,13 +105,18 @@ public:
 
 
 protected:
-  static const int THRESHOLD = 128 * CryptoPP::SHA3_512::DIGESTSIZE;
-  int total;
+  static const int MIN_BITS = CryptoPP::SHA3_512::DIGESTSIZE;
+  int totalBits;
   bool hexOutput;
   std::ofstream out;
   std::thread thread;
   CryptoPP::SHA3_512 hash;
   uint8_t digest[CryptoPP::SHA3_512::DIGESTSIZE];
+
+#ifdef LINUX
+  std::string mouseInput;
+  std::string keyboardInput;
+#endif
 
   static void runner(void);
 
@@ -112,8 +126,12 @@ protected:
 
 private:
   Entropist(void)
-    : total(0)
+    : totalBits(0)
     , hexOutput(false)
+#ifdef LINUX
+    , mouseInput("/dev/input/event6")
+    , keyboardInput("/dev/input/event2")
+#endif
   {
     // ...
   }
