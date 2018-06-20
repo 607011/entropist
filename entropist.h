@@ -135,16 +135,16 @@ protected:
   CryptoPP::SHA3_512 mHash;
   uint8_t mDigest[CryptoPP::SHA3_512::DIGESTSIZE];
 
-#ifdef LINUX
-  std::string mMouseInput;
-  std::string mKeyboardInput;
-#endif
-
   static constexpr int EntropySamplePoolSize = 8192;
   std::vector<uint8_t> mEntropySamplePool;
   double mAvgEntropy;
   bool mEntropyCalculated;
   double mEntropyBitsPerByte;
+
+#ifdef LINUX
+  std::string mMouseInput;
+  std::string mKeyboardInput;
+#endif
 
   static void runner(void);
 

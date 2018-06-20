@@ -3,8 +3,9 @@
  */
 
 #include "entropy-test.h"
-#include <cstdlib>
-#include <cmath>
+#include <stdint.h>
+#include <stdlib.h>
+#include <math.h>
 
 double calcEntropyBits(const std::vector<uint8_t> &buf)
 {

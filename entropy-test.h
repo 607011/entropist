@@ -6,6 +6,7 @@
 #define __ENTROPY_H__
 
 #include <vector>
+#include <stdint.h>
 
 double calcEntropyBits(const std::vector<uint8_t> &);
 
