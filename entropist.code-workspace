@@ -21,7 +21,13 @@
 			"ios": "cpp",
 			"__locale": "cpp",
 			"locale": "cpp",
-			"string": "cpp"
+			"string": "cpp",
+			"__split_buffer": "cpp",
+			"deque": "cpp",
+			"list": "cpp",
+			"cmath": "cpp",
+			"fstream": "cpp",
+			"cstdlib": "cpp"
 		}
 	}
 }

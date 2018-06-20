@@ -9,18 +9,15 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <iterator>
+#include <algorithm>
 #include <cryptopp/sha3.h>
 #include <cryptopp/hex.h>
+#include "entropy-test.h"
 
-#ifdef MACOS
-#include <Carbon/Carbon.h>
-#endif
-
-
+// Singleton
 class Entropist {
 public:
-  ~Entropist() {}
-
   static Entropist &instance(void)
   {
     static Entropist instance;
@@ -28,33 +25,35 @@ public:
   }
 
 
+  static Entropist &self(void)
+  {
+    return instance();
+  }
+
+
   void run(void)
   {
-    thread = std::thread(Entropist::runner);
+    mThread = std::thread(Entropist::runner);
   }
+
 
 #ifdef LINUX
-  void setMouseInput(const std::string &in)
-  {
-    mouseInput = in;
-  }
-
-  void setKeyboardInput(const std::string &in)
-  {
-    keyboardInput = in;
-  }
+  void setMouseInput(const std::string &in);
+  void setKeyboardInput(const std::string &in);
+  const std::string &mouseInput(void) const;
+  const std::string &keyboardInput(void) const;
 #endif 
 
 
   void join(void)
   {
-    thread.join();
+    mThread.join();
   }  
 
 
   void setHexOutput(bool v)
   {
-    hexOutput = v;
+    mHexOutput = v;
   }
 
 
@@ -62,27 +61,43 @@ public:
   {
     if (fname.size() > 0)
     {
-      out.open(fname, std::fstream::out | std::fstream::binary | std::fstream::app);
-      return out.is_open();
+      mOut.open(fname, std::fstream::out | std::fstream::binary | std::fstream::app);
+      return mOut.is_open();
     }
     return false;
   }
 
 
-  void output(void) {
-    if (totalBits > MIN_BITS)
+  void add(const uint8_t *buf, int bufSize)
+  {
+    if (!mEntropyCalculated)
     {
-      totalBits = 0;
-      hash.Final(digest);
-      if (hexOutput)
+      std::copy(buf, buf + bufSize, std::back_inserter(mEntropySamplePool));
+    }
+    mHash.Update(buf, bufSize);
+    mTotalBits += mEntropyBitsPerByte * bufSize;
+  }
+
+
+  void output(void) {
+    if (!mEntropyCalculated && mEntropySamplePool.size() > EntropySamplePoolSize)
+    {
+      mEntropyBitsPerByte = EntropySafetyFactor * calcEntropyBits(mEntropySamplePool);
+      mEntropyCalculated = true;
+    }
+    if (mTotalBits > MinBitsForUpdate)
+    {
+      mTotalBits = 0;
+      mHash.Final(mDigest);
+      if (mHexOutput)
       {
         std::string hexDigest;
         CryptoPP::HexEncoder encoder(new CryptoPP::StringSink(hexDigest), false);
-        encoder.Put(instance().digest, sizeof(digest));
+        encoder.Put(mDigest, sizeof(mDigest));
         encoder.MessageEnd();
-        if (out.is_open())
+        if (mOut.is_open())
         {
-          out << hexDigest << std::flush;
+          mOut << hexDigest << std::flush;
         }
         else
         {
@@ -91,46 +106,58 @@ public:
       }
       else
       {
-        if (out.is_open())
+        if (mOut.is_open())
         {
-          out << digest << std::flush;
+          mOut << mDigest << std::flush;
         }
         else
         {
-          std::cout << digest << std::flush;
+          std::cout << mDigest << std::flush;
         }
       }
     }
   }
 
 
+  double entropyBitsPerByte(void) const
+  {
+    return mEntropyBitsPerByte;
+  }
+
+
 protected:
-  static const int MIN_BITS = 8 * CryptoPP::SHA3_512::DIGESTSIZE;
-  int totalBits;
-  bool hexOutput;
-  std::ofstream out;
-  std::thread thread;
-  CryptoPP::SHA3_512 hash;
-  uint8_t digest[CryptoPP::SHA3_512::DIGESTSIZE];
+  static constexpr double MinBitsForUpdate = 8 * CryptoPP::SHA3_512::DIGESTSIZE;
+  static constexpr double EntropySafetyFactor = 1.0 / 100;
+  double mTotalBits;
+  bool mHexOutput;
+  std::ofstream mOut;
+  std::thread mThread;
+  CryptoPP::SHA3_512 mHash;
+  uint8_t mDigest[CryptoPP::SHA3_512::DIGESTSIZE];
 
 #ifdef LINUX
-  std::string mouseInput;
-  std::string keyboardInput;
+  std::string mMouseInput;
+  std::string mKeyboardInput;
 #endif
+
+  static constexpr int EntropySamplePoolSize = 8192;
+  std::vector<uint8_t> mEntropySamplePool;
+  double mAvgEntropy;
+  bool mEntropyCalculated;
+  double mEntropyBitsPerByte;
 
   static void runner(void);
 
-#ifdef MACOS
-  static CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon);
-#endif
-
 private:
   Entropist(void)
-    : totalBits(0)
-    , hexOutput(false)
+    : mTotalBits(0)
+    , mHexOutput(false)
+    , mAvgEntropy(1.0)
+    , mEntropyCalculated(false)
+    , mEntropyBitsPerByte(EntropySafetyFactor)
 #ifdef LINUX
-    , mouseInput("/dev/input/event6")
-    , keyboardInput("/dev/input/event2")
+    , mMouseInput("/dev/input/event6")
+    , mKeyboardInput("/dev/input/event2")
 #endif
   {
     // ...

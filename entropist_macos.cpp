@@ -4,10 +4,13 @@
 
 #include "entropist.h"
 #include <iostream>
+#include <vector>
+#include <Carbon/Carbon.h>
 
 
-CGEventRef Entropist::eventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
+static CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
 {
+  Entropist *entropist = reinterpret_cast<Entropist*>(refcon);
   switch (type)
   {
     case kCGEventKeyUp:
@@ -15,25 +18,23 @@ CGEventRef Entropist::eventCallback(CGEventTapProxy proxy, CGEventType type, CGE
       CGKeyCode keycode = static_cast<CGKeyCode>(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode));
       CGEventFlags flags = static_cast<CGEventFlags>(CGEventGetFlags(event));
       CGEventTimestamp timestamp = CGEventGetTimestamp(event);
-      instance().hash.Update(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
-      instance().hash.Update(reinterpret_cast<uint8_t*>(&keycode), sizeof(keycode));
-      instance().hash.Update(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
-      instance().totalBits += 2;
+      entropist->add(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
+      entropist->add(reinterpret_cast<uint8_t*>(&keycode), sizeof(keycode));
+      entropist->add(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
       break;
     }
     case kCGEventMouseMoved:
     {
       CGPoint location = CGEventGetLocation(event);
       CGEventTimestamp timestamp = CGEventGetTimestamp(event);
-      instance().hash.Update(reinterpret_cast<uint8_t*>(&location), sizeof(location));
-      instance().hash.Update(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
-      instance().totalBits += 4;
+      entropist->add(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
+      entropist->add(reinterpret_cast<uint8_t*>(&location), sizeof(location));
       break;
     }
     default:
       break;
   }
-  instance().output();
+  entropist->output();
   return event;
 }
 
@@ -49,7 +50,7 @@ void Entropist::runner(void)
       kCGEventTapOptionDefault,
       eventMask,
       eventCallback,
-      nullptr);
+      &instance());
   if (!eventTap)
   {
       std::cerr << "failed to create event tap" << std::endl;

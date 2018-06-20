@@ -14,9 +14,9 @@
 
 void Entropist::runner(void)
 {
-  int fd = open(instance().mouseInput.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
+  int fd = open(self().mouseInput().c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
   if (fd < 0) {
-    std::cerr << "ERROR: Cannot open " << instance().mouseInput << "." << std::endl;
+    std::cerr << "ERROR: Cannot open " << self().mouseInput() << "." << std::endl;
     return;
   }
   fcntl(fd, F_SETFL, 0);
@@ -29,10 +29,30 @@ void Entropist::runner(void)
       break;
     }
     if (evt.type == EV_ABS || evt.type == EV_REL) {
-      instance().hash.Update(reinterpret_cast<uint8_t*>(&evt), sizeof(evt));
-      instance().totalBits += 4;
-      instance().output();
+      self().add(reinterpret_cast<uint8_t*>(&evt), sizeof(evt));
+      self().output();
     }
   }
   close(fd);
+}
+
+
+void Entropist::setMouseInput(const std::string &in)
+{
+  mMouseInput = in;
+}
+
+void Entropist::setKeyboardInput(const std::string &in)
+{
+  mKeyboardInput = in;
+}
+
+const std::string &Entropist::mouseInput(void) const
+{
+  return mMouseInput;
+}
+
+const std::string &Entropist::keyboardInput(void) const
+{
+  return mKeyboardInput;
 }

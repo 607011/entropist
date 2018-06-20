@@ -81,7 +81,12 @@ int main(int argc, char *argv[])
       case OUTPUT:
         if (opt.arg)
         {
-          e.setOutputFilename(opt.arg);
+          bool ok = e.setOutputFilename(opt.arg);
+          if (!ok)
+          {
+            std::cerr << "Output file '" << opt.arg << "' cannot be opened." << std::endl;
+            return EXIT_FAILURE;
+          }
         }
         break;
       case VERBOSE:
