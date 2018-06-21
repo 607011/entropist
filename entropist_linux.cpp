@@ -71,29 +71,35 @@ void Entropist::findDevices(void)
     std::transform(line.begin(), line.end(), line.begin(), ::tolower);
     std::size_t pos;
     pos = line.find("name=", 0);
-    if (pos != std::string::npos) {
+    if (pos != std::string::npos)
+    {
       for (auto devName : deviceNames)
       {
         pos = line.find(devName, 0);
-	if (pos != std::string::npos) {
-	  std::cout << line << std::endl;
-	  std::string line2;
-	  while (getline(devicesInput, line2)) {
+        if (pos != std::string::npos)
+        {
+          std::cout << line << std::endl;
+          std::string line2;
+          while (getline(devicesInput, line2))
+          {
             std::transform(line2.begin(), line2.end(), line2.begin(), ::tolower);
-	    pos = line2.find("handlers=", 0);
-	    if (pos != std::string::npos) {
-	      std::cout << line2 << std::endl;
-	      std::vector<std::string> hsplit = split(line2, '=');
-	      if (hsplit.size() > 1) {
-		const std::vector<std::string> &handlers = split(hsplit.at(1), ' ');
-	        for (auto h : handlers) {
-		  std::cout << ">>>" << h << "<<<" << std::endl;
-		}
-	      }
-	      break;
-	    }
-	  }
-	}
+            pos = line2.find("handlers=", 0);
+            if (pos != std::string::npos)
+            {
+              std::cout << line2 << std::endl;
+              std::vector<std::string> hsplit = split(line2, '=');
+              if (hsplit.size() > 1)
+              {
+                const std::vector<std::string> &handlers = split(hsplit.at(1), ' ');
+                for (auto h : handlers)
+                {
+                  std::cout << ">>>" << h << "<<<" << std::endl;
+                }
+              }
+              break;
+            }
+          }
+        }
       }
     }
   }
