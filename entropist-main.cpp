@@ -1,8 +1,7 @@
-/* Generate random numbers from global key events (macOS version).
- *
- * Copyright (c) 2018 Oliver Lau <oliver@ersatzworld.net>
- * All rights reserved. 
- */
+// -*- coding: utf-8 -*-
+// Generate random numbers from global key events (macOS version).
+// Copyright (c) 2018 Oliver Lau <oliver@ersatzworld.net>
+// All rights reserved.
 
 #include <iostream>
 #include <string>

@@ -1,6 +1,7 @@
-/* Copyright (c) 2018 Oliver Lau <oliver@ersatzworld.net>
- * All rights reserved. 
- */
+// -*- coding: utf-8 -*-
+// Copyright (c) 2018 Oliver Lau <oliver@ersatzworld.net>
+// All rights reserved.
+
 
 #include "entropy-test.h"
 #include <stdint.h>
