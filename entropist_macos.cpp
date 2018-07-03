@@ -4,6 +4,7 @@
 
 #include "entropist.h"
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <Carbon/Carbon.h>
 
@@ -13,7 +14,7 @@ static CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEvent
   Entropist *entropist = reinterpret_cast<Entropist*>(refcon);
   switch (type)
   {
-    case kCGEventKeyUp:
+    case kCGEventKeyDown:
     {
       CGKeyCode keycode = static_cast<CGKeyCode>(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode));
       CGEventFlags flags = static_cast<CGEventFlags>(CGEventGetFlags(event));
@@ -23,12 +24,31 @@ static CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEvent
       entropist->add(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
       break;
     }
+    case kCGEventKeyUp:
+    {
+      CGEventTimestamp timestamp = CGEventGetTimestamp(event);
+      entropist->add(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
+    }
     case kCGEventMouseMoved:
     {
       CGPoint location = CGEventGetLocation(event);
       CGEventTimestamp timestamp = CGEventGetTimestamp(event);
       entropist->add(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
       entropist->add(reinterpret_cast<uint8_t*>(&location), sizeof(location));
+      break;
+    }
+    case kCGEventLeftMouseUp:
+    {
+      CGPoint location = CGEventGetLocation(event);
+      CGEventTimestamp timestamp = CGEventGetTimestamp(event);
+      entropist->add(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
+      entropist->add(reinterpret_cast<uint8_t*>(&location), sizeof(location));
+      break;
+    }
+    case kCGEventScrollWheel:
+    {
+      CGEventTimestamp timestamp = CGEventGetTimestamp(event);
+      entropist->add(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
       break;
     }
     default:
@@ -43,7 +63,11 @@ void Entropist::runner(void)
 {
   const CGEventMask eventMask = 
     CGEventMaskBit(kCGEventMouseMoved) |
+    CGEventMaskBit(kCGEventLeftMouseUp) |
+    CGEventMaskBit(kCGEventScrollWheel) |
+    CGEventMaskBit(kCGEventKeyDown) |
     CGEventMaskBit(kCGEventKeyUp);
+  std::cout << std::hex << std::setw(8) << std::setfill('0') << eventMask << std::endl;
   CFMachPortRef eventTap = CGEventTapCreate(
       kCGSessionEventTap,
       kCGHeadInsertEventTap,
