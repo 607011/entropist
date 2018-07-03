@@ -19,11 +19,14 @@
 #include <linux/input-event-codes.h>
 
 
-void Entropist::runner(void)
+void Entropist::runner(const std::string &deviceName)
 {
-  int fd = open(self().mouseInput().c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
+#ifndef NDEBUG
+  std::cout << "Opening " << deviceName << " ..." << std::endl;
+#endif
+  int fd = open(deviceName.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
   if (fd < 0) {
-    std::cerr << "ERROR: Cannot open " << self().mouseInput() << "." << std::endl;
+    std::cerr << "ERROR: Cannot open " << deviceName << "." << std::endl;
     return;
   }
   fcntl(fd, F_SETFL, 0);
@@ -35,7 +38,7 @@ void Entropist::runner(void)
       std::cerr << "Read failed." << std::endl;
       break;
     }
-    if (evt.type == EV_ABS || evt.type == EV_REL) {
+    if (evt.type == EV_ABS || evt.type == EV_REL || evt.type == EV_KEY) {
       self().add(reinterpret_cast<uint8_t*>(&evt), sizeof(evt));
       self().output();
     }
@@ -44,44 +47,22 @@ void Entropist::runner(void)
 }
 
 
-std::vector<std::string> split(const std::string &s, char seperator)
-{
-  std::vector<std::string> result;
-  std::string::size_type prev_pos = 0, pos = 0;
-  while((pos = s.find(seperator, pos)) != std::string::npos) {
-    result.push_back(s.substr(prev_pos, pos-prev_pos));
-    prev_pos = ++pos;
-  }
-  result.push_back(s.substr(prev_pos, pos-prev_pos));
-  return result;
-}
-
 constexpr unsigned int BITS_PER_LONG = sizeof(long) * 8;
 #define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
-#define OFF(x)  ((x)%BITS_PER_LONG)
-#define BIT(x)  (1UL<<OFF(x))
+#define OFF(x) ((x)%BITS_PER_LONG)
+#define BIT(x) (1UL<<OFF(x))
 #define LONG(x) ((x)/BITS_PER_LONG)
-#define test_bit(bit, array)  ((array[LONG(bit)] >> OFF(bit)) & 1)
-
-struct DeviceInfo {
-  DeviceInfo(void)
-  : isKeyboard(false)
-  , isMouse(false)
-  , valid(false)
-  { /* ... */ }
-  bool isKeyboard;
-  bool isMouse;
-  bool valid;
-  std::string name;
-};
+#define test_bit(bit, array) ((array[LONG(bit)] >> OFF(bit)) & 1)
 
 
 void Entropist::findDevices(void)
 {
+#ifndef NDEBUG
   std::cout << "Searching for devices ..." << std::endl;
+#endif
   DIR *dir;
   struct dirent *ent;
-  std::map<std::string, DeviceInfo> usableDevices;
+
   if ((dir = opendir("/dev/input")) != NULL)
   {
     while ((ent = readdir(dir)) != NULL)
@@ -91,8 +72,10 @@ void Entropist::findDevices(void)
         unsigned long bit[EV_MAX][NBITS(KEY_MAX)];
         char name[256];
         std::string fname = std::string("/dev/input/") + std::string(ent->d_name);
-        usableDevices[fname] = DeviceInfo();
+        mDetectedDevices[fname] = DeviceInfo();
+#ifndef NDEBUG
         std::cout << std::endl << "> " << fname << std::endl;
+#endif
         int fd = open(fname.c_str(), O_RDONLY);
         if (fd < 0)
         {
@@ -100,60 +83,52 @@ void Entropist::findDevices(void)
         }
         ioctl(fd, EVIOCGNAME(sizeof(name)), name);
         std::string devName(name);
-        usableDevices[fname].valid = true;
-        usableDevices[fname].name.resize(devName.size());
-        std::transform(devName.begin(), devName.end(), usableDevices[fname].name.begin(), ::tolower);
-        std::cout << ">> Input device name: \"" <<  usableDevices[fname].name << "\"" << std::endl;
+        mDetectedDevices[fname].valid = true;
+        mDetectedDevices[fname].name.resize(devName.size());
+        std::transform(devName.begin(), devName.end(), mDetectedDevices[fname].name.begin(), ::tolower);
+#ifndef NDEBUG
+        std::cout << ">> Input device name: \"" <<  mDetectedDevices[fname].name << "\"" << std::endl;
+#endif
         memset(bit, 0, sizeof(bit));
         ioctl(fd, EVIOCGBIT(0, EV_MAX), bit[0]);
         if (test_bit(EV_KEY, bit[0]))
         {
+#ifndef NDEBUG
             std::cout << ">>> KEYBOARD";
+#endif
+            mDetectedDevices[fname].maybeKeyboard = true;
             static const std::vector<int> MandatoryKeyCodes = {KEY_ESC, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_0, KEY_MINUS, KEY_BACKSPACE, KEY_TAB, KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_U, KEY_I, KEY_O, KEY_P, KEY_LEFTBRACE, KEY_RIGHTBRACE, KEY_ENTER, KEY_LEFTCTRL, KEY_A, KEY_S, KEY_D, KEY_F, KEY_G, KEY_H, KEY_J, KEY_K, KEY_L, KEY_SEMICOLON, KEY_APOSTROPHE, KEY_GRAVE, KEY_BACKSLASH, KEY_Z, KEY_X, KEY_C, KEY_V, KEY_B, KEY_N, KEY_M, KEY_COMMA, KEY_DOT, KEY_SLASH, KEY_KPASTERISK, KEY_SPACE};
             ioctl(fd, EVIOCGBIT(EV_KEY, KEY_MAX), bit[EV_KEY]);
-            usableDevices[fname].isKeyboard = std::all_of(
+            mDetectedDevices[fname].isKeyboard = std::all_of(
               MandatoryKeyCodes.begin(),
               MandatoryKeyCodes.end(),
               [&bit](int v) {
                 return test_bit(v, bit[EV_KEY]);
               });
-            if (usableDevices[fname].isKeyboard)
+#ifndef NDEBUG
+            if (mDetectedDevices[fname].isKeyboard)
             {
               std::cout << " FOR SURE !!!!!!!!!!!!!!!!!!!!!";
             }
             std::cout << std::endl;
+#endif
         }
-        if (test_bit(EV_ABS, bit[0]))
+        if (test_bit(EV_ABS, bit[0]) || test_bit(EV_REL, bit[0]))
         {
+          mDetectedDevices[fname].maybeMouse = true;
+#ifndef NDEBUG
           std::cout << ">>> MOUSE";
-          if (usableDevices[fname].name.find("mouse") != std::string::npos)
+#endif
+          if (mDetectedDevices[fname].name.find("mouse") != std::string::npos)
           {
+#ifndef NDEBUG
               std::cout << " FOR SURE !!!!!!!!!!!!!!!!!!!!!";
+#endif
+              mDetectedDevices[fname].isMouse = true;
           }
+#ifndef NDEBUG
           std::cout << std::endl;
-
-          /*
-          ioctl(fd, EVIOCGBIT(EV_ABS, KEY_MAX), bit[EV_ABS]);
-          std::cout << ">>>> Event codes:" << std::endl;
-          for (int j = 0; j < KEY_MAX; ++j)
-          {
-            if (test_bit(j, bit[EV_ABS]))
-            {
-              std::cout << std::dec << j << " 0x" << std::hex << std::setw(4) << std::setfill('0') << j << " ";
-              std::cout << std::endl << ">>>>>ABS" << std::endl;
-              int abs[5];
-              ioctl(fd, EVIOCGABS(j), abs);
-              for (int k = 0; k < 5; ++k)
-              {
-                if ((k < 3) || (abs[k] > 0))
-                {
-                  std::cout << std::dec << k << " => " << abs[k] << std::endl;
-                }
-              }
-            }
-          }
-          std::cout << std::endl;
-          */
+#endif
         }
       }
     }
@@ -163,26 +138,4 @@ void Entropist::findDevices(void)
   {
     std::cerr << "ERROR: Could not open directory /dev/input." << std::endl;
   }
-}
-
-
-
-void Entropist::setMouseInput(const std::string &in)
-{
-  mMouseInput = in;
-}
-
-void Entropist::setKeyboardInput(const std::string &in)
-{
-  mKeyboardInput = in;
-}
-
-const std::string &Entropist::mouseInput(void) const
-{
-  return mMouseInput;
-}
-
-const std::string &Entropist::keyboardInput(void) const
-{
-  return mKeyboardInput;
 }

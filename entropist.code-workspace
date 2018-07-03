@@ -27,7 +27,12 @@
 			"list": "cpp",
 			"cmath": "cpp",
 			"fstream": "cpp",
-			"cstdlib": "cpp"
+			"cstdlib": "cpp",
+			"__bit_reference": "cpp",
+			"__string": "cpp",
+			"__tree": "cpp",
+			"map": "cpp",
+			"string_view": "cpp"
 		}
 	}
 }
