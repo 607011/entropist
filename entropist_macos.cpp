@@ -1,11 +1,12 @@
-/* Copyright (c) 2018 Oliver Lau <oliver@ersatzworld.net>
- * All rights reserved. 
- */
+// -*- coding: utf-8 -*-
+// Copyright (c) 2018 Oliver Lau <oliver@ersatzworld.net>
+// All rights reserved. 
 
 #include "entropist.h"
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <stdint.h>
 #include <Carbon/Carbon.h>
 
 
@@ -16,11 +17,11 @@ static CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEvent
   {
     case kCGEventKeyDown:
     {
-      CGKeyCode keycode = static_cast<CGKeyCode>(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode));
-      CGEventFlags flags = static_cast<CGEventFlags>(CGEventGetFlags(event));
       CGEventTimestamp timestamp = CGEventGetTimestamp(event);
       entropist->add(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
+      CGKeyCode keycode = static_cast<CGKeyCode>(CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode));
       entropist->add(reinterpret_cast<uint8_t*>(&keycode), sizeof(keycode));
+      CGEventFlags flags = static_cast<CGEventFlags>(CGEventGetFlags(event));
       entropist->add(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
       break;
     }
@@ -31,17 +32,17 @@ static CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEvent
     }
     case kCGEventMouseMoved:
     {
-      CGPoint location = CGEventGetLocation(event);
       CGEventTimestamp timestamp = CGEventGetTimestamp(event);
       entropist->add(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
+      CGPoint location = CGEventGetLocation(event);
       entropist->add(reinterpret_cast<uint8_t*>(&location), sizeof(location));
       break;
     }
     case kCGEventLeftMouseUp:
     {
-      CGPoint location = CGEventGetLocation(event);
       CGEventTimestamp timestamp = CGEventGetTimestamp(event);
       entropist->add(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
+      CGPoint location = CGEventGetLocation(event);
       entropist->add(reinterpret_cast<uint8_t*>(&location), sizeof(location));
       break;
     }
@@ -49,6 +50,12 @@ static CGEventRef eventCallback(CGEventTapProxy proxy, CGEventType type, CGEvent
     {
       CGEventTimestamp timestamp = CGEventGetTimestamp(event);
       entropist->add(reinterpret_cast<uint8_t*>(&timestamp), sizeof(timestamp));
+      CGPoint location = CGEventGetLocation(event);
+      entropist->add(reinterpret_cast<uint8_t*>(&location), sizeof(location));
+      int64_t da1 = CGEventGetIntegerValueField(event, kCGScrollWheelEventDeltaAxis1);
+      entropist->add(reinterpret_cast<uint8_t*>(&da1), sizeof(da1));
+      int64_t da2 = CGEventGetIntegerValueField(event, kCGScrollWheelEventDeltaAxis2);
+      entropist->add(reinterpret_cast<uint8_t*>(&da2), sizeof(da2));
       break;
     }
     default:
@@ -67,7 +74,6 @@ void Entropist::runner(void)
     CGEventMaskBit(kCGEventScrollWheel) |
     CGEventMaskBit(kCGEventKeyDown) |
     CGEventMaskBit(kCGEventKeyUp);
-  std::cout << std::hex << std::setw(8) << std::setfill('0') << eventMask << std::endl;
   CFMachPortRef eventTap = CGEventTapCreate(
       kCGSessionEventTap,
       kCGHeadInsertEventTap,
@@ -83,10 +89,12 @@ void Entropist::runner(void)
   CFRunLoopSourceRef runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0);
   CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
   CGEventTapEnable(eventTap, true);
-  if (eventTap) {
+  if (eventTap)
+  {
     CFRelease(eventTap);
   }
-  if (runLoopSource) {
+  if (runLoopSource)
+  {
     CFRelease(runLoopSource);
   }
   CFRunLoopRun();

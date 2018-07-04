@@ -2,6 +2,8 @@
 // Copyright (c) 2018 Oliver Lau <oliver@ersatzworld.net>
 // All rights reserved.
 
+#ifdef LINUX
+
 #include "entropist.h"
 
 #include <stdio.h>
@@ -139,3 +141,5 @@ void Entropist::findDevices(void)
     std::cerr << "ERROR: Could not open directory /dev/input." << std::endl;
   }
 }
+
+#endif

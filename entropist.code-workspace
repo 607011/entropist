@@ -32,7 +32,8 @@
 			"__string": "cpp",
 			"__tree": "cpp",
 			"map": "cpp",
-			"string_view": "cpp"
+			"string_view": "cpp",
+			"cstdint": "cpp"
 		}
 	}
 }

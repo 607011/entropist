@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <stdint.h>
+#include <sys/types.h>
 
 double calcEntropyBits(const std::vector<uint8_t> &);
 

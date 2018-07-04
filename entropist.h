@@ -98,7 +98,8 @@ public:
     mAddMutex.lock();
     if (!mEntropyCalculated && mEntropySamplePool.size() > EntropySamplePoolSize)
     {
-      mEntropyBitsPerByte = EntropySafetyFactor * calcEntropyBits(mEntropySamplePool);
+      const double ent = calcEntropyBits(mEntropySamplePool);
+      mEntropyBitsPerByte = EntropySafetyFactor * ent;
       mEntropyCalculated = true;
     }
     if (mTotalBits > MinBitsForUpdate)
