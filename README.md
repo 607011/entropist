@@ -9,10 +9,11 @@ Generate random numbers from mouse moves and keystrokes
 sudo apt install libcrypto++-dev
 git clone https://github.com/ola-ct/entropist.git
 cd entropist
-cmake .
+mkdir Release
+cd Release
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make
-entropist -v --hex
+sudo ./entropist -v --hex
 ```
 
 Move mouse around for a while. Hexadecimally coded random numbers should appear.
-
